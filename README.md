@@ -159,3 +159,7 @@ No cerrar esta terminal
 
 1. Ve a la parte inferior despues de generar comentarios "Resumir Comentarios"
 2. Obtén análisis detallado con insights
+
+# Si es ejecutado en un servidor o equipo sin recursos suficientes de GPU, es probable que no se logre generar correctamente las imagenes. Tambien hay probabilidad de que no se hayan instalado correctamente las dependencias.
+
+# No me alcanzo el tiempo para crear los archivos Docker para que se ejcute facil y correctamente todo.
