@@ -60,7 +60,7 @@ NODE_ENV = production
 API_PORT = 3333
 
 #CONFIGURACION DE OLLAMA
-OLLAMA_URL=http://ollama:11434
+OLLAMA_URL=http://localhost:11434
 MODEL_NAME = "gemma3:1b"
 ```
 
