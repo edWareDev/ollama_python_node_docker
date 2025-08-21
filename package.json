@@ -7,10 +7,11 @@
     "node": ">=22.x"
   },
   "scripts": {
-    "start": "node ."
+    "start": "node --env-file=.env .",
+    "dev": "node --env-file=.env.development --watch ."
   },
   "keywords": [],
-  "author": "",
+  "author": "edWareDev",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
