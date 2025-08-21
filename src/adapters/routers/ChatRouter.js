@@ -4,4 +4,4 @@ import { controllerGenerateDetailedProductInfo } from "../controllers/ChatContro
 export const chatRouter = Router();
 
 //RUTAS GET
-chatRouter.get("/", controllerGenerateDetailedProductInfo);
+chatRouter.post("/generate-detailed-product-info", controllerGenerateDetailedProductInfo);
