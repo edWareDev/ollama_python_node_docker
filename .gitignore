@@ -140,3 +140,8 @@ uploads
 
 *.bkp
 *.dtmp
+
+__pycache__
+*/imagenes_consumibles
+*/modelos
+/modelos

@@ -7,6 +7,8 @@ import hashlib
 from pathlib import Path
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, DPMSolverMultistepScheduler
 import gc
+import base64
+from io import BytesIO
 
 class GeneradorImagenesConsumibles:
     def __init__(self, modelo="runwayml/stable-diffusion-v1-5", cache_dir="./modelos"):
@@ -220,7 +222,7 @@ class GeneradorImagenesConsumibles:
 
     def generar_imagenes(self, nombre_producto, descripcion, estilo="profesional", 
                         num_variaciones=3, width=768, height=768, 
-                        pasos_inferencia=25, guidance_scale=7.5):
+                        pasos_inferencia=25, guidance_scale=7.5, return_base64=False):
         """
         Genera múltiples imágenes del producto consumible
         
@@ -233,6 +235,7 @@ class GeneradorImagenesConsumibles:
             height (int): Alto de imagen
             pasos_inferencia (int): Pasos de diffusión (más = mejor calidad)
             guidance_scale (float): Adherencia al prompt (7-15 recomendado)
+            return_base64 (bool): Si True, devuelve imágenes en base64 en lugar de guardar archivos
             
         Returns:
             dict: Metadata completa de las imágenes generadas
@@ -317,27 +320,52 @@ class GeneradorImagenesConsumibles:
                 # Crear nombre de archivo único
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 nombre_archivo = f"{nombre_producto.replace(' ', '_')}_{estilo}_{session_id}_{i+1:02d}.png"
-                ruta_archivo = self.carpeta_imagenes / nombre_archivo
                 
-                # Guardar imagen
-                imagen.save(ruta_archivo, "PNG", quality=95)
-                
-                # Calcular hash de la imagen para verificación
-                with open(ruta_archivo, 'rb') as f:
-                    hash_imagen = hashlib.sha256(f.read()).hexdigest()[:16]
-                
-                # Metadata de la imagen individual
-                metadata_imagen = {
-                    "variacion": i + 1,
-                    "nombre_archivo": nombre_archivo,
-                    "ruta_completa": str(ruta_archivo.absolute()),
-                    "ruta_relativa": str(ruta_archivo),
-                    "tamano_archivo": ruta_archivo.stat().st_size,
-                    "hash_sha256": hash_imagen,
-                    "dimensiones": {"width": width, "height": height},
-                    "timestamp_generacion": datetime.now().isoformat(),
-                    "exito": True
-                }
+                if return_base64:
+                    # Convertir imagen a base64
+                    buffer = BytesIO()
+                    imagen.save(buffer, format='PNG')
+                    img_bytes = buffer.getvalue()
+                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+                    
+                    # Calcular hash de la imagen para verificación
+                    hash_imagen = hashlib.sha256(img_bytes).hexdigest()[:16]
+                    
+                    # Metadata de la imagen individual (modo base64)
+                    metadata_imagen = {
+                        "variacion": i + 1,
+                        "nombre_archivo": nombre_archivo,
+                        "base64_data": img_base64,
+                        "mime_type": "image/png",
+                        "tamano_bytes": len(img_bytes),
+                        "hash_sha256": hash_imagen,
+                        "dimensiones": {"width": width, "height": height},
+                        "timestamp_generacion": datetime.now().isoformat(),
+                        "exito": True,
+                        "formato": "base64"
+                    }
+                else:
+                    # Modo tradicional: guardar archivo
+                    ruta_archivo = self.carpeta_imagenes / nombre_archivo
+                    imagen.save(ruta_archivo, "PNG", quality=95)
+                    
+                    # Calcular hash de la imagen para verificación
+                    with open(ruta_archivo, 'rb') as f:
+                        hash_imagen = hashlib.sha256(f.read()).hexdigest()[:16]
+                    
+                    # Metadata de la imagen individual (modo archivo)
+                    metadata_imagen = {
+                        "variacion": i + 1,
+                        "nombre_archivo": nombre_archivo,
+                        "ruta_completa": str(ruta_archivo.absolute()),
+                        "ruta_relativa": str(ruta_archivo),
+                        "tamano_archivo": ruta_archivo.stat().st_size,
+                        "hash_sha256": hash_imagen,
+                        "dimensiones": {"width": width, "height": height},
+                        "timestamp_generacion": datetime.now().isoformat(),
+                        "exito": True,
+                        "formato": "archivo"
+                    }
                 
                 metadata_sesion["imagenes"].append(metadata_imagen)
                 imagenes_exitosas += 1

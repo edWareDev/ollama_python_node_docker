@@ -177,6 +177,19 @@ Estilos disponibles: profesional, artistico, minimalista, natural, premium, dive
     )
     
     parser.add_argument(
+        '--base64',
+        action='store_true',
+        default=True,
+        help='Devolver imágenes en base64 (default: True)'
+    )
+    
+    parser.add_argument(
+        '--save-files',
+        action='store_true',
+        help='Guardar archivos en disco en lugar de devolver base64'
+    )
+    
+    parser.add_argument(
         '--version',
         action='version',
         version='Generador de Imágenes CLI v1.0'
@@ -384,6 +397,12 @@ Estilos disponibles: profesional, artistico, minimalista, natural, premium, dive
             generador.carpeta_imagenes.mkdir(exist_ok=True, parents=True)
         
         # Generar imágenes
+        # Determinar si usar base64 o archivos
+        use_base64 = args.base64 and not args.save_files
+        
+        if not args.quiet:
+            print(f"Modo: {'Base64' if use_base64 else 'Archivos'}", file=sys.stderr)
+        
         resultado = generador.generar_imagenes(
             nombre_producto=args.producto,
             descripcion=args.descripcion,
@@ -392,7 +411,8 @@ Estilos disponibles: profesional, artistico, minimalista, natural, premium, dive
             width=args.width,
             height=args.height,
             pasos_inferencia=args.pasos,
-            guidance_scale=args.guidance
+            guidance_scale=args.guidance,
+            return_base64=use_base64
         )
         
         # Formatear respuesta para Node.js con rutas absolutas
@@ -431,20 +451,39 @@ Estilos disponibles: profesional, artistico, minimalista, natural, premium, dive
         # Procesar lista de imágenes generadas
         for img_info in resultado['imagenes']:
             if img_info.get('exito', False):
-                imagen_data = {
-                    "id": f"{resultado['session_id']}_{img_info['variacion']:02d}",
-                    "variacion": img_info['variacion'],
-                    "nombre_archivo": img_info['nombre_archivo'],
-                    "ruta_absoluta": img_info['ruta_completa'],
-                    "ruta_relativa": img_info['ruta_relativa'],
-                    "url_file": f"file://{img_info['ruta_completa']}",  # Para acceso directo
-                    "metadata": {
-                        "hash_sha256": img_info['hash_sha256'],
-                        "tamano_bytes": img_info['tamano_archivo'],
-                        "dimensiones": img_info['dimensiones'],
-                        "timestamp_generacion": img_info['timestamp_generacion']
+                if img_info.get('formato') == 'base64':
+                    # Imagen en base64
+                    imagen_data = {
+                        "id": f"{resultado['session_id']}_{img_info['variacion']:02d}",
+                        "variacion": img_info['variacion'],
+                        "nombre_archivo": img_info['nombre_archivo'],
+                        "base64_data": img_info['base64_data'],
+                        "mime_type": img_info['mime_type'],
+                        "formato": "base64",
+                        "metadata": {
+                            "hash_sha256": img_info['hash_sha256'],
+                            "tamano_bytes": img_info['tamano_bytes'],
+                            "dimensiones": img_info['dimensiones'],
+                            "timestamp_generacion": img_info['timestamp_generacion']
+                        }
                     }
-                }
+                else:
+                    # Imagen como archivo
+                    imagen_data = {
+                        "id": f"{resultado['session_id']}_{img_info['variacion']:02d}",
+                        "variacion": img_info['variacion'],
+                        "nombre_archivo": img_info['nombre_archivo'],
+                        "ruta_absoluta": img_info['ruta_completa'],
+                        "ruta_relativa": img_info['ruta_relativa'],
+                        "url_file": f"file://{img_info['ruta_completa']}",  # Para acceso directo
+                        "formato": "archivo",
+                        "metadata": {
+                            "hash_sha256": img_info['hash_sha256'],
+                            "tamano_bytes": img_info.get('tamano_archivo', img_info.get('tamano_bytes', 0)),
+                            "dimensiones": img_info['dimensiones'],
+                            "timestamp_generacion": img_info['timestamp_generacion']
+                        }
+                    }
                 respuesta_final['datos']['imagenes'].append(imagen_data)
         
         # Output del JSON resultado (esto es lo que captura Node.js)

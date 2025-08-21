@@ -270,4 +270,254 @@ Las contribuciones son bienvenidas. Por favor:
 
 ---
 
+# 🐳 Despliegue con Docker
+
+## Instalación Rápida con Docker
+
+### Opción 1: Docker Compose (Recomendado)
+
+1. **Clonar el repositorio:**
+```bash
+git clone <tu-repositorio>
+cd python_image_generator
+```
+
+2. **Configuración inicial:**
+```bash
+# Windows (PowerShell)
+.\docker-utils.ps1 -Command setup -Mode gpu
+
+# Linux/Mac
+cp .env.example .env
+mkdir -p imagenes_consumibles metadata docker-data
+```
+
+3. **Construir y ejecutar:**
+```bash
+# Para sistemas con GPU NVIDIA
+docker-compose up --build
+
+# Para sistemas solo CPU
+docker-compose -f docker-compose.cpu.yml up --build
+```
+
+### Opción 2: Docker Manual
+
+```bash
+# Construir imagen GPU
+docker build -t ai-image-generator:gpu .
+
+# Construir imagen CPU
+docker build -f Dockerfile.cpu -t ai-image-generator:cpu .
+
+# Ejecutar contenedor GPU
+docker run --rm -it --gpus all \
+  -v "$(pwd)/imagenes_consumibles:/app/imagenes_consumibles" \
+  -v "$(pwd)/metadata:/app/metadata" \
+  ai-image-generator:gpu
+
+# Ejecutar contenedor CPU
+docker run --rm -it \
+  -v "$(pwd)/imagenes_consumibles:/app/imagenes_consumibles" \
+  -v "$(pwd)/metadata:/app/metadata" \
+  ai-image-generator:cpu
+```
+
+## Uso con Docker
+
+### Generar Imágenes
+
+```bash
+# Usar el contenedor para generar imágenes
+docker run --rm --gpus all \
+  -v "$(pwd)/imagenes_consumibles:/app/imagenes_consumibles" \
+  -v "$(pwd)/metadata:/app/metadata" \
+  ai-image-generator:gpu \
+  python generar_cli.py --producto "Chocolate Premium" --descripcion "Chocolate artesanal 70% cacao" --estilo premium --variaciones 3
+```
+
+### Shell Interactivo
+
+```bash
+# Abrir shell en el contenedor
+docker run --rm -it --gpus all \
+  -v "$(pwd)/imagenes_consumibles:/app/imagenes_consumibles" \
+  -v "$(pwd)/metadata:/app/metadata" \
+  ai-image-generator:gpu bash
+```
+
+## Scripts de Utilidad
+
+### Windows PowerShell
+
+```powershell
+# Configuración inicial
+.\docker-utils.ps1 -Command setup -Mode gpu
+
+# Construir imagen
+.\docker-utils.ps1 -Command build -Mode gpu
+
+# Ejecutar contenedor interactivo
+.\docker-utils.ps1 -Command run -Mode gpu
+
+# Probar el generador
+.\docker-utils.ps1 -Command test -Mode gpu
+
+# Ver logs
+.\docker-utils.ps1 -Command logs
+
+# Limpiar todo
+.\docker-utils.ps1 -Command clean -Force
+```
+
+## Configuración Avanzada
+
+### Variables de Entorno
+
+Copiar `.env.example` a `.env` y personalizar:
+
+```bash
+# Hardware
+FORCE_CPU=false
+PRELOAD_MODEL=false
+
+# GPU
+CUDA_VISIBLE_DEVICES=all
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+
+# Recursos
+MEMORY_LIMIT=16g
+CPU_LIMIT=4.0
+```
+
+### Docker Compose Profiles
+
+```bash
+# Solo servicio principal
+docker-compose up
+
+# Con proxy Nginx
+docker-compose --profile web up
+
+# Con Redis cache
+docker-compose --profile cache up
+
+# Con todos los servicios
+docker-compose --profile web --profile cache up
+```
+
+### Volúmenes Persistentes
+
+- `./imagenes_consumibles` - Imágenes generadas
+- `./metadata` - Archivos JSON con metadata
+- `./docker-data/models` - Cache de modelos de IA
+- `./docker-data/data` - Datos adicionales
+- `./docker-data/logs` - Logs del contenedor
+
+## Integración con CI/CD
+
+### GitHub Actions
+
+El repositorio incluye workflows automáticos:
+
+- **Build automático** en push a main/develop
+- **Tests de seguridad** con Trivy
+- **Multi-platform builds** (AMD64, ARM64)
+- **Push a registries** (GitHub Container Registry)
+- **Releases automáticos** en tags
+
+### Registry Images
+
+```bash
+# Descargar imágenes pre-construidas
+docker pull ghcr.io/tu-usuario/ai-image-generator:latest-gpu
+docker pull ghcr.io/tu-usuario/ai-image-generator:latest-cpu
+```
+
+## Monitoreo y Logs
+
+### Health Checks
+
+```bash
+# Verificar salud del contenedor
+docker ps --filter name=ai-image-generator
+docker inspect ai-image-generator | grep Health
+```
+
+### Logs y Debug
+
+```bash
+# Ver logs en tiempo real
+docker-compose logs -f ai-image-generator
+
+# Logs específicos
+docker logs ai-image-generator-container
+
+# Debug mode
+docker-compose exec ai-image-generator python generar_cli.py --help
+```
+
+## Recursos del Sistema
+
+### Requisitos Docker
+
+**GPU (Recomendado):**
+- Docker 20.10+
+- NVIDIA Container Toolkit
+- GPU NVIDIA con 6GB+ VRAM
+- 16GB RAM del host
+- 50GB espacio libre
+
+**CPU:**
+- Docker 20.10+
+- 8GB RAM del host
+- 4+ CPU cores
+- 30GB espacio libre
+
+### Optimizaciones
+
+```bash
+# Limpiar cache periódicamente
+docker system prune -f
+docker volume prune -f
+
+# Monitorear recursos
+docker stats ai-image-generator-container
+
+# Limitar recursos
+docker run --memory=8g --cpus="4.0" ...
+```
+
+## Troubleshooting Docker
+
+### GPU no detectada
+```bash
+# Verificar NVIDIA Docker
+docker run --rm --gpus all nvidia/cuda:11.8-base-ubuntu20.04 nvidia-smi
+
+# Instalar NVIDIA Container Toolkit
+curl -s -L https://nvidia.github.io/nvidia-container-runtime/gpgkey | sudo apt-key add -
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-container-runtime/$distribution/nvidia-container-runtime.list | sudo tee /etc/apt/sources.list.d/nvidia-container-runtime.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
+sudo systemctl restart docker
+```
+
+### Out of Memory
+```bash
+# Aumentar memoria disponible
+docker run --memory=16g --memory-swap=32g ...
+
+# Usar imagen CPU
+docker-compose -f docker-compose.cpu.yml up
+```
+
+### Permisos de archivos
+```bash
+# Arreglar permisos en Linux
+sudo chown -R $USER:$USER imagenes_consumibles metadata docker-data
+```
+
+---
+
 ¿Tienes preguntas? Crea un issue en el repositorio o consulta la documentación de las bibliotecas utilizadas.
