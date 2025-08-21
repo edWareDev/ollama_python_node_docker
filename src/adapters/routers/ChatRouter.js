@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { controller } from "../controllers/ChatController.js";
+import { controllerGenerateDetailedProductInfo } from "../controllers/ChatController.js";
 
 export const chatRouter = Router();
 
 //RUTAS GET
-chatRouter.get("/", controller);
+chatRouter.get("/", controllerGenerateDetailedProductInfo);

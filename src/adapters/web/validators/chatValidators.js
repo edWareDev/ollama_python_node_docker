@@ -1,6 +1,6 @@
-import { z } from 'zon';
+import { z } from 'zod';
 
-export const chatValidator = z.object({
+export const createProductInfoSchema = z.object({
     productName: z
         .string({ required_error: "El nombre del producto es requerido" })
         .trim(),

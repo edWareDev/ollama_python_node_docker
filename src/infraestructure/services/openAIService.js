@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
+import { ollamaConfig } from '../../../config/ollama.js';
 
-export const openAiClient = new OpenAI({
-    baseURL: 'http://localhost:11434/v1',
+export const OpenAiClient = new OpenAI({
+    baseURL: ollamaConfig.baseUrl,
     apiKey: 'ollama'
 });
