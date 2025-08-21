@@ -1,0 +1,69 @@
+# ==========================================================================
+# Generador de Imágenes con IA - Dependencias con detección automática GPU/CPU
+# ==========================================================================
+
+# PyTorch - Se instalará automáticamente la versión correcta según el sistema
+# Para GPU con CUDA: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Para CPU solamente: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+torch>=2.5.0
+torchvision>=0.20.0
+torchaudio>=2.5.0
+
+# Diffusers y Transformers para Stable Diffusion y SDXL
+diffusers>=0.35.0
+transformers>=4.55.0
+accelerate>=1.10.0
+
+# Soporte adicional para SDXL y mejores prompts
+compel>=2.0.0
+
+# Dependencias principales
+Pillow>=11.0.0
+numpy>=2.1.0
+safetensors>=0.6.0
+
+# Hugging Face Hub para modelos
+huggingface_hub>=0.34.0
+
+# Utilidades
+requests>=2.32.0
+tqdm>=4.67.0
+packaging>=25.0
+psutil>=7.0.0
+pyyaml>=6.0.2
+
+# Procesamiento de archivos
+pathlib2>=2.3.7; python_version<"3.4"
+hashlib3>=1.0.1; python_version<"3.6"
+
+# Optimizaciones de memoria (opcional, si está disponible)
+# xformers>=0.0.28  # Descomentear si logras instalarlo en tu sistema
+
+# =======================
+# NOTAS DE INSTALACIÓN:
+# =======================
+# 
+# 1. Para RTX 3070 Ti, asegúrate de tener los drivers NVIDIA actualizados
+# 2. CUDA Toolkit compatible (11.8+ o 12.x)
+# 3. Instalar PyTorch con soporte CUDA usando el comando específico arriba
+# 4. Las optimizaciones están configuradas para 8GB de VRAM
+# 
+# =======================
+# COMANDOS DE INSTALACIÓN:
+# =======================
+#
+# Windows (PowerShell):
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# pip install -r requirements.txt
+#
+# Linux/Mac:
+# pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# pip3 install -r requirements.txt
+#
+# =======================
+# VERIFICAR INSTALACIÓN:
+# =======================
+#
+# python -c "import torch; print('CUDA disponible:', torch.cuda.is_available())"
+# python -c "import torch; print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A')"
+#
