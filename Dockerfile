@@ -4,9 +4,6 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Install Python and pip for the image generator service
-RUN apk add --no-cache python3 py3-pip
-
 # Copy package files
 COPY package*.json ./
 
@@ -15,17 +12,6 @@ RUN npm ci --only=production
 
 # Copy application source code
 COPY . .
-
-# Create necessary directories
-RUN mkdir -p python_image_generator/imagenes_consumibles
-RUN mkdir -p python_image_generator/metadata
-
-# Install Python dependencies for image generation
-WORKDIR /app/python_image_generator
-RUN if [ -f requirements.txt ]; then pip3 install --no-cache-dir -r requirements.txt; fi
-
-# Switch back to app directory
-WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs

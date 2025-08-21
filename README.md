@@ -90,7 +90,7 @@ docker-compose up -d
 docker exec -it ollama_service ollama pull gemma3:1b
 
 # O usar otro modelo (opcional)
-docker exec -it ollama_service ollama pull llama3:8b
+docker exec -it ollama_service ollama pull gemma3:1b
 ```
 
 ### 5. Verificar Instalación
@@ -217,10 +217,10 @@ docker-compose ps
 docker exec -it ollama_service ollama list
 
 # Instalar nuevo modelo
-docker exec -it ollama_service ollama pull llama3:8b
+docker exec -it ollama_service ollama pull gemma3:1b
 
 # Actualizar variable de entorno
-MODEL_NAME=llama3:8b
+MODEL_NAME=gemma3:1b
 ```
 
 ### Configurar GPU
