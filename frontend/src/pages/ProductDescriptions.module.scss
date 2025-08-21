@@ -1,0 +1,275 @@
+@use '../styles/_variables' as *;
+@use '../styles/_mixins' as *;
+
+.productDescriptionsPage {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-xl;
+}
+
+.pageHeader {
+  text-align: center;
+  margin-bottom: $spacing-2xl * 1.5;
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: $spacing-md;
+  @include flex-center;
+  gap: $spacing-md;
+  
+  @include mobile {
+    font-size: 1.75rem;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+}
+
+.pageDescription {
+  font-size: 1.125rem;
+  color: $text-secondary;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+  
+  @include mobile {
+    font-size: 1rem;
+  }
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: $spacing-xl;
+  align-items: start;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formSection {
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+  
+  .submitButton {
+    width: 100%;
+  }
+}
+
+.resultsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.resultItem {
+  @include card;
+  background: $bg-gray-50;
+  
+  @include hover-lift;
+}
+
+.resultHeader {
+  @include flex-between;
+  margin-bottom: $spacing-md;
+  
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+.resultTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
+}
+
+.resultActions {
+  display: flex;
+  gap: $spacing-sm;
+  
+  @include mobile {
+    width: 100%;
+    
+    .btn {
+      flex: 1;
+    }
+  }
+}
+
+.resultContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.resultField {
+  position: relative;
+}
+
+.fieldHeader {
+  @include flex-between;
+  margin-bottom: $spacing-sm;
+  
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+}
+
+.fieldLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $text-primary;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btnCopyField {
+  background: none;
+  border: none;
+  color: $text-secondary;
+  cursor: pointer;
+  padding: $spacing-xs;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+  @include flex-center;
+  gap: $spacing-xs;
+
+  &:hover {
+    color: $primary-color;
+    background: $bg-gray-100;
+  }
+}
+
+.fieldContent {
+  background: $bg-white;
+  border: 1px solid $border-gray;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin: 0;
+  line-height: 1.6;
+  box-shadow: $shadow-sm;
+}
+
+.titleContent {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: $text-primary;
+}
+
+.descriptionContent {
+  color: $text-secondary;
+}
+
+.usageInfo {
+  margin-top: $spacing-xl;
+  padding-top: $spacing-lg;
+  border-top: 1px solid $border-gray;
+
+  h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.usageStats {
+  display: flex;
+  gap: $spacing-md;
+  font-size: 0.75rem;
+  color: $text-secondary;
+  
+  @include mobile {
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+}
+
+.tips {
+  background: $bg-gray-50;
+  border: 1px solid $border-gray;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  text-align: left;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: $shadow-sm;
+
+  h4 {
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    font-size: 1rem;
+  }
+
+  ul {
+    color: $text-secondary;
+    line-height: 1.6;
+    margin: 0;
+    padding-left: $spacing-lg;
+  }
+
+  li {
+    margin-bottom: $spacing-sm;
+  }
+}
+
+.stepIndicator {
+  @include flex-center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+  padding: $spacing-md;
+  background: rgba($primary-color, 0.1);
+  border-radius: $radius-lg;
+  border: 1px solid rgba($primary-color, 0.2);
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: $primary-color;
+  color: $text-white;
+  @include flex-center;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.stepText {
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.nextStepButton {
+  margin-top: $spacing-lg;
+  @include btn-success;
+  width: 100%;
+}
+
+.actionButtons {
+  @include flex-between;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  
+  @include mobile {
+    flex-direction: column;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+}

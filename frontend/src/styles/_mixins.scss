@@ -1,0 +1,194 @@
+@use 'sass:color';
+@use 'variables' as *;
+
+// Flexbox mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+// Grid mixins
+@mixin grid-cols($cols) {
+  display: grid;
+  grid-template-columns: repeat(#{$cols}, 1fr);
+  gap: $spacing-lg;
+}
+
+// Responsive mixins
+@mixin mobile {
+  @media (max-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $breakpoint-md + 1) and (max-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-lg + 1) {
+    @content;
+  }
+}
+
+// Button mixins
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: $radius-md;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all $transition-base;
+  text-decoration: none;
+  justify-content: center;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin btn-primary {
+  @include btn-base;
+  background: linear-gradient(135deg, $primary-color, $secondary-color);
+  color: $text-white;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+@mixin btn-secondary {
+  @include btn-base;
+  background: $bg-gray-100;
+  color: $text-primary;
+  border: 1px solid $border-gray;
+
+  &:hover:not(:disabled) {
+    background: $bg-gray-50;
+  }
+}
+
+@mixin btn-success {
+  @include btn-base;
+  background: $success-color;
+  color: $text-white;
+
+  &:hover:not(:disabled) {
+    background: color.scale($success-color, $lightness: -10%);
+  }
+}
+
+// Card mixins
+@mixin card {
+  background: $bg-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-lg;
+  border: 1px solid $border-gray;
+}
+
+@mixin card-header {
+  margin-bottom: $spacing-lg;
+}
+
+@mixin card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+// Form mixins
+@mixin form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid $border-gray;
+  border-radius: $radius-md;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: border-color $transition-base, box-shadow $transition-base;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    color: $text-secondary;
+  }
+}
+
+@mixin form-label {
+  display: block;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+  font-size: 0.875rem;
+}
+
+// Loading animation
+@mixin spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+// Hover effects
+@mixin hover-lift {
+  transition: transform $transition-base, box-shadow $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+// Text truncation
+@mixin text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin text-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

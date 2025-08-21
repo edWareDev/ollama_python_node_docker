@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { MessageSquare, Sparkles, BarChart3, Star, Calendar, ThumbsUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageSquare, Sparkles, BarChart3, Star, Calendar, ThumbsUp, ArrowLeft } from 'lucide-react';
 import { commentService } from '../services/apiService';
 import toast from 'react-hot-toast';
+import styles from './ProductComments.module.scss';
+import { useNavigate } from 'react-router-dom';
 
 export function ProductComments() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('generate');
   const [generateForm, setGenerateForm] = useState({
     productName: '',
@@ -15,14 +18,47 @@ export function ProductComments() {
     productName: '',
     comments: ''
   });
-  
+
   const [generateResults, setGenerateResults] = useState(null);
   const [summarizeResults, setSummarizeResults] = useState(null);
-  const [loading, setLoading] = useState({ generate: false, summarize: false });
+  const [loading, setLoading] = useState({ generate: false, summarize: false, autoSummarize: false });
+  const [isDataFromDescription, setIsDataFromDescription] = useState(false);
+
+  useEffect(() => {
+    loadFromStorage();
+  }, []);
+
+  const loadFromStorage = () => {
+    try {
+      const storedDescriptions = sessionStorage.getItem('generatedDescriptions');
+      const selectedIndex = sessionStorage.getItem('selectedDescriptionIndex');
+
+      if (storedDescriptions && selectedIndex !== null) {
+        const descriptions = JSON.parse(storedDescriptions);
+        const index = parseInt(selectedIndex);
+
+        if (descriptions.results && descriptions.results[index]) {
+          const selected = descriptions.results[index];
+          setGenerateForm(prev => ({
+            ...prev,
+            productName: selected.titulo || prev.productName,
+            productDescription: selected.descripcion || prev.productDescription
+          }));
+          setSummarizeForm(prev => ({
+            ...prev,
+            productName: selected.titulo || prev.productName
+          }));
+          setIsDataFromDescription(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading from storage:', error);
+    }
+  };
 
   const handleGenerateSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!generateForm.productName.trim() || !generateForm.productDescription.trim()) {
       toast.error('El nombre y la descripción del producto son obligatorios');
       return;
@@ -31,7 +67,7 @@ export function ProductComments() {
     setLoading(prev => ({ ...prev, generate: true }));
     try {
       const response = await commentService.generateComments(generateForm);
-      
+
       if (response.success) {
         setGenerateResults(response.data);
         toast.success('¡Comentarios generados exitosamente!');
@@ -48,7 +84,7 @@ export function ProductComments() {
 
   const handleSummarizeSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!summarizeForm.productName.trim() || !summarizeForm.comments.trim()) {
       toast.error('El nombre del producto y los comentarios son obligatorios');
       return;
@@ -72,7 +108,7 @@ export function ProductComments() {
     setLoading(prev => ({ ...prev, summarize: true }));
     try {
       const response = await commentService.summarizeComments(data);
-      
+
       if (response.success) {
         setSummarizeResults(response.data);
         toast.success('¡Comentarios resumidos exitosamente!');
@@ -87,44 +123,80 @@ export function ProductComments() {
     }
   };
 
+  const handleAutoSummarize = async () => {
+    if (!generateResults || !generateResults.comments) {
+      toast.error('No hay comentarios generados para resumir');
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, autoSummarize: true }));
+    try {
+      const data = {
+        productName: generateResults.product_name,
+        comments: generateResults.comments.map(comment => ({
+          usuario: comment.usuario,
+          calificacion: comment.calificacion,
+          comentario: comment.comentario,
+          fecha_relativa: comment.fecha_relativa,
+          util: comment.util
+        }))
+      };
+
+      const response = await commentService.summarizeComments(data);
+
+      if (response.success) {
+        setSummarizeResults(response.data);
+        toast.success('¡Comentarios resumidos exitosamente!');
+      } else {
+        toast.error('Error al resumir los comentarios');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error(error.message || 'Error al resumir los comentarios');
+    } finally {
+      setLoading(prev => ({ ...prev, autoSummarize: false }));
+    }
+  };
+
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <Star 
-        key={i} 
-        size={14} 
-        className={i < rating ? 'star-filled' : 'star-empty'} 
+      <Star
+        key={i}
+        size={14}
+        className={i < rating ? styles.starFilled : styles.starEmpty}
       />
     ));
   };
 
   return (
-    <div className="product-comments-page">
+    <div className={styles.productCommentsPage}>
       <div className="page-header">
         <h1 className="page-title">
           <MessageSquare size={32} />
           Generador de Comentarios
         </h1>
         <p className="page-description">
-          Genera comentarios realistas de clientes para tus productos o resume comentarios 
+          Genera comentarios realistas de clientes para tus productos o resume comentarios
           existentes para obtener insights valiosos sobre la opinión de tus usuarios.
         </p>
-      </div>
 
-      <div className="tabs">
-        <button 
-          className={`tab ${activeTab === 'generate' ? 'active' : ''}`}
-          onClick={() => setActiveTab('generate')}
-        >
-          <Sparkles size={20} />
-          Generar Comentarios
-        </button>
-        <button 
-          className={`tab ${activeTab === 'summarize' ? 'active' : ''}`}
-          onClick={() => setActiveTab('summarize')}
-        >
-          <BarChart3 size={20} />
-          Resumir Comentarios
-        </button>
+        {isDataFromDescription && (
+          <div className="alert alert-info">
+            <span>ℹ️</span>
+            <div>
+              <strong>Datos cargados automáticamente</strong>
+              <p>Se han cargado el título y descripción de la propuesta seleccionada anteriormente.</p>
+              <button
+                onClick={() => navigate('/descriptions')}
+                className="btn btn-secondary btn-sm"
+                style={{ marginTop: '0.5rem' }}
+              >
+                <ArrowLeft size={16} />
+                Volver a Descripciones
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {activeTab === 'generate' && (
@@ -164,7 +236,7 @@ export function ProductComments() {
                     />
                   </div>
 
-                  <div className="form-row">
+                  <div className={styles.formRow}>
                     <div className="form-group">
                       <label className="form-label">Número de Comentarios</label>
                       <select
@@ -227,25 +299,25 @@ export function ProductComments() {
                     </p>
                   </div>
 
-                  <div className="comments-list">
+                  <div className={styles.commentsList}>
                     {generateResults.comments?.map((comment, index) => (
-                      <div key={index} className="comment-item">
-                        <div className="comment-header">
-                          <div className="comment-user">
+                      <div key={index} className={styles.commentItem}>
+                        <div className={styles.commentHeader}>
+                          <div className={styles.commentUser}>
                             <strong>{comment.usuario}</strong>
-                            <div className="comment-rating">
+                            <div className={styles.commentRating}>
                               {renderStars(comment.calificacion)}
-                              <span className="rating-number">({comment.calificacion}/5)</span>
+                              <span className={styles.ratingNumber}>({comment.calificacion}/5)</span>
                             </div>
                           </div>
                         </div>
-                        <p className="comment-text">{comment.comentario}</p>
-                        <div className="comment-meta">
-                          <span className="comment-date">
+                        <p className={styles.commentText}>{comment.comentario}</p>
+                        <div className={styles.commentMeta}>
+                          <span className={styles.commentDate}>
                             <Calendar size={12} />
                             {comment.fecha_relativa}
                           </span>
-                          <span className="comment-helpful">
+                          <span className={styles.commentHelpful}>
                             <ThumbsUp size={12} />
                             {comment.util} personas encontraron esto útil
                           </span>
@@ -253,13 +325,153 @@ export function ProductComments() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Botón para resumir comentarios generados */}
+                  <div className={styles.autoSummarizeSection}>
+                    <button
+                      onClick={handleAutoSummarize}
+                      className="btn btn-success btn-lg"
+                      disabled={loading.autoSummarize}
+                      style={{ width: '100%' }}
+                    >
+                      {loading.autoSummarize ? (
+                        <>
+                          <div className="spinner"></div>
+                          Resumiendo comentarios...
+                        </>
+                      ) : (
+                        <>
+                          <BarChart3 size={20} />
+                          Resumir estos Comentarios
+                        </>
+                      )}
+                    </button>
+                    <p className={styles.autoSummarizeHelp}>
+                      💡 Obtén un análisis detallado de los comentarios generados con insights y recomendaciones
+                    </p>
+                  </div>
+
+                  {/* Mostrar resumen si está disponible */}
+                  {summarizeResults && (
+                    <div className={styles.summarySection}>
+                      <div className={styles.summaryHeader}>
+                        <h2 className={styles.summaryTitle}>
+                          <BarChart3 size={24} />
+                          Análisis de Comentarios
+                        </h2>
+                        <p className={styles.summaryDescription}>
+                          Análisis de {summarizeResults.total_comments_analyzed} comentarios para "{summarizeResults.product_name}"
+                        </p>
+                      </div>
+
+                      <div className={styles.summaryContent}>
+                        <div className={styles.summaryItem}>
+                          <h4>📋 Resumen General</h4>
+                          <p>{summarizeResults.summary?.resumen_general}</p>
+                        </div>
+
+                        <div className={styles.summaryItem}>
+                          <h4>✅ Aspectos Positivos</h4>
+                          {Array.isArray(summarizeResults.summary?.aspectos_positivos) ? (
+                            <ul>
+                              {summarizeResults.summary.aspectos_positivos.map((aspect, index) => (
+                                <li key={index}>{aspect}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>{summarizeResults.summary?.aspectos_positivos}</p>
+                          )}
+                        </div>
+
+                        <div className={styles.summaryItem}>
+                          <h4>⚠️ Aspectos Negativos</h4>
+                          {Array.isArray(summarizeResults.summary?.aspectos_negativos) ? (
+                            <ul>
+                              {summarizeResults.summary.aspectos_negativos.map((aspect, index) => (
+                                <li key={index}>{aspect}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>{summarizeResults.summary?.aspectos_negativos}</p>
+                          )}
+                        </div>
+
+                        <div className={styles.summaryStats}>
+                          <div className={styles.statItem}>
+                            <div className={styles.statValue}>
+                              {summarizeResults.summary?.calificacion_promedio}/5
+                            </div>
+                            <div className={styles.statLabel}>Calificación Promedio</div>
+                            <div className={styles.statStars}>
+                              {renderStars(Math.round(summarizeResults.summary?.calificacion_promedio || 0))}
+                            </div>
+                            {summarizeResults.summary?.estadisticas_detalladas && (
+                              <div className={styles.statDetail}>
+                                {summarizeResults.summary.estadisticas_detalladas.total_calificaciones > 0 ? (
+                                  <>Basado en {summarizeResults.summary.estadisticas_detalladas.total_calificaciones} calificaciones</>
+                                ) : (
+                                  <>Estimado por IA (sin calificaciones numéricas)</>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className={styles.statItem}>
+                            <div className={styles.sentimentBadge} data-sentiment={summarizeResults.summary?.sentiment_general}>
+                              {summarizeResults.summary?.sentiment_general}
+                            </div>
+                            <div className={styles.statLabel}>Sentimiento General</div>
+                          </div>
+                        </div>
+
+                        {/* Mostrar distribución de calificaciones si está disponible */}
+                        {summarizeResults.summary?.estadisticas_detalladas?.total_calificaciones > 0 && (
+                          <div className={styles.summaryItem}>
+                            <h4>📊 Distribución de Calificaciones</h4>
+                            <div className={styles.ratingDistribution}>
+                              {[5, 4, 3, 2, 1].map(rating => {
+                                const count = summarizeResults.summary.estadisticas_detalladas.distribucion_calificaciones[rating] || 0;
+                                const percentage = summarizeResults.summary.estadisticas_detalladas.total_calificaciones > 0 ?
+                                  Math.round((count / summarizeResults.summary.estadisticas_detalladas.total_calificaciones) * 100) : 0;
+                                return (
+                                  <div key={rating} className={styles.ratingBar}>
+                                    <span className={styles.ratingLabel}>{rating} ⭐</span>
+                                    <div className={styles.ratingBarContainer}>
+                                      <div
+                                        className={styles.ratingBarFill}
+                                        style={{ width: `${percentage}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className={styles.ratingCount}>{count} ({percentage}%)</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className={styles.summaryItem}>
+                          <h4>💡 Recomendaciones de Mejora</h4>
+                          {Array.isArray(summarizeResults.summary?.recomendacion_mejoras) ? (
+                            <ul>
+                              {summarizeResults.summary.recomendacion_mejoras.map((rec, index) => (
+                                <li key={index}>{rec}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>{summarizeResults.summary?.recomendacion_mejoras}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="empty-state">
                   <MessageSquare size={48} />
                   <h3>Genera comentarios realistas</h3>
                   <p>
-                    Configura los parámetros y genera comentarios de clientes 
+                    Configura los parámetros y genera comentarios de clientes
                     realistas para tu producto usando IA.
                   </p>
                 </div>
@@ -338,76 +550,114 @@ El envío fue rápido pero el empaque llegó dañado`}
 
             <div className="results-section">
               {summarizeResults ? (
-                <div className="summary-section">
-                  <div className="summary-header">
-                    <h2 className="summary-title">
+                <div className={styles.summarySection}>
+                  <div className={styles.summaryHeader}>
+                    <h2 className={styles.summaryTitle}>
                       <BarChart3 size={24} />
                       Resumen de Análisis
                     </h2>
-                    <p className="summary-description">
+                    <p className={styles.summaryDescription}>
                       Análisis de {summarizeResults.total_comments_analyzed} comentarios para "{summarizeResults.product_name}"
                     </p>
                   </div>
 
-                  <div className="summary-content">
-                    <div className="summary-item">
+                  <div className={styles.summaryContent}>
+                    <div className={styles.summaryItem}>
                       <h4>📋 Resumen General</h4>
                       <p>{summarizeResults.summary?.resumen_general}</p>
                     </div>
 
-                    <div className="summary-item">
+                    <div className={styles.summaryItem}>
                       <h4>✅ Aspectos Positivos</h4>
-                      <ul>
-                        {Array.isArray(summarizeResults.summary?.aspectos_positivos) ? 
-                          summarizeResults.summary.aspectos_positivos.map((aspect, index) => (
+                      {Array.isArray(summarizeResults.summary?.aspectos_positivos) ? (
+                        <ul>
+                          {summarizeResults.summary.aspectos_positivos.map((aspect, index) => (
                             <li key={index}>{aspect}</li>
-                          )) : 
-                          <li>{summarizeResults.summary?.aspectos_positivos}</li>
-                        }
-                      </ul>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>{summarizeResults.summary?.aspectos_positivos}</p>
+                      )}
                     </div>
 
-                    <div className="summary-item">
+                    <div className={styles.summaryItem}>
                       <h4>⚠️ Aspectos Negativos</h4>
-                      <ul>
-                        {Array.isArray(summarizeResults.summary?.aspectos_negativos) ? 
-                          summarizeResults.summary.aspectos_negativos.map((aspect, index) => (
+                      {Array.isArray(summarizeResults.summary?.aspectos_negativos) ? (
+                        <ul>
+                          {summarizeResults.summary.aspectos_negativos.map((aspect, index) => (
                             <li key={index}>{aspect}</li>
-                          )) : 
-                          <li>{summarizeResults.summary?.aspectos_negativos}</li>
-                        }
-                      </ul>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>{summarizeResults.summary?.aspectos_negativos}</p>
+                      )}
                     </div>
 
-                    <div className="summary-stats">
-                      <div className="stat-item">
-                        <div className="stat-value">
+                    <div className={styles.summaryStats}>
+                      <div className={styles.statItem}>
+                        <div className={styles.statValue}>
                           {summarizeResults.summary?.calificacion_promedio}/5
                         </div>
-                        <div className="stat-label">Calificación Promedio</div>
-                        <div className="stat-stars">
+                        <div className={styles.statLabel}>Calificación Promedio</div>
+                        <div className={styles.statStars}>
                           {renderStars(Math.round(summarizeResults.summary?.calificacion_promedio || 0))}
                         </div>
+                        {summarizeResults.summary?.estadisticas_detalladas && (
+                          <div className={styles.statDetail}>
+                            {summarizeResults.summary.estadisticas_detalladas.total_calificaciones > 0 ? (
+                              <>Basado en {summarizeResults.summary.estadisticas_detalladas.total_calificaciones} calificaciones</>
+                            ) : (
+                              <>Estimado por IA (sin calificaciones numéricas)</>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      
-                      <div className="stat-item">
-                        <div className="stat-value sentiment-badge" data-sentiment={summarizeResults.summary?.sentiment_general}>
+
+                      <div className={styles.statItem}>
+                        <div className={styles.sentimentBadge} data-sentiment={summarizeResults.summary?.sentiment_general}>
                           {summarizeResults.summary?.sentiment_general}
                         </div>
-                        <div className="stat-label">Sentimiento General</div>
+                        <div className={styles.statLabel}>Sentimiento General</div>
                       </div>
                     </div>
 
-                    <div className="summary-item">
+                    {/* Mostrar distribución de calificaciones si está disponible */}
+                    {summarizeResults.summary?.estadisticas_detalladas?.total_calificaciones > 0 && (
+                      <div className={styles.summaryItem}>
+                        <h4>📊 Distribución de Calificaciones</h4>
+                        <div className={styles.ratingDistribution}>
+                          {[5, 4, 3, 2, 1].map(rating => {
+                            const count = summarizeResults.summary.estadisticas_detalladas.distribucion_calificaciones[rating] || 0;
+                            const percentage = summarizeResults.summary.estadisticas_detalladas.total_calificaciones > 0 ?
+                              Math.round((count / summarizeResults.summary.estadisticas_detalladas.total_calificaciones) * 100) : 0;
+                            return (
+                              <div key={rating} className={styles.ratingBar}>
+                                <span className={styles.ratingLabel}>{rating} ⭐</span>
+                                <div className={styles.ratingBarContainer}>
+                                  <div
+                                    className={styles.ratingBarFill}
+                                    style={{ width: `${percentage}%` }}
+                                  ></div>
+                                </div>
+                                <span className={styles.ratingCount}>{count} ({percentage}%)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className={styles.summaryItem}>
                       <h4>💡 Recomendaciones de Mejora</h4>
-                      <ul>
-                        {Array.isArray(summarizeResults.summary?.recomendacion_mejoras) ? 
-                          summarizeResults.summary.recomendacion_mejoras.map((rec, index) => (
+                      {Array.isArray(summarizeResults.summary?.recomendacion_mejoras) ? (
+                        <ul>
+                          {summarizeResults.summary.recomendacion_mejoras.map((rec, index) => (
                             <li key={index}>{rec}</li>
-                          )) : 
-                          <li>{summarizeResults.summary?.recomendacion_mejoras}</li>
-                        }
-                      </ul>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>{summarizeResults.summary?.recomendacion_mejoras}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -416,7 +666,7 @@ El envío fue rápido pero el empaque llegó dañado`}
                   <BarChart3 size={48} />
                   <h3>Analiza comentarios existentes</h3>
                   <p>
-                    Proporciona comentarios de clientes para obtener un resumen 
+                    Proporciona comentarios de clientes para obtener un resumen
                     detallado con insights y recomendaciones.
                   </p>
                 </div>
@@ -429,158 +679,3 @@ El envío fue rápido pero el empaque llegó dañado`}
   );
 }
 
-// Inyectar estilos CSS específicos
-const commentStyles = `
-.product-comments-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--border-gray);
-}
-
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.tab:hover {
-  color: var(--text-primary);
-}
-
-.tab.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.star-filled {
-  color: #fbbf24;
-  fill: #fbbf24;
-}
-
-.star-empty {
-  color: #e5e7eb;
-}
-
-.rating-number {
-  margin-left: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.summary-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin: 2rem 0;
-  padding: 2rem;
-  background: var(--bg-gray-50);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-gray);
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.stat-stars {
-  display: flex;
-  justify-content: center;
-  gap: 0.25rem;
-}
-
-.sentiment-badge {
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem !important;
-  text-transform: capitalize;
-  font-weight: 600 !important;
-}
-
-.sentiment-badge[data-sentiment="positivo"] {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.sentiment-badge[data-sentiment="negativo"] {
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.sentiment-badge[data-sentiment="mixto"] {
-  background: #fffbeb;
-  color: #92400e;
-}
-
-.sentiment-badge[data-sentiment="neutro"] {
-  background: var(--bg-gray-100);
-  color: var(--text-primary);
-}
-
-@media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .tabs {
-    flex-direction: column;
-  }
-  
-  .summary-stats {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .comment-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
-`;
-
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = commentStyles;
-  document.head.appendChild(style);
-}

@@ -5,7 +5,7 @@ import { ProductDescriptions } from './pages/ProductDescriptions'
 import { ProductImages } from './pages/ProductImages'
 import { ProductComments } from './pages/ProductComments'
 import { ApiDocs } from './pages/ApiDocs'
-import './App.css'
+import './App.scss'
 
 function App() {
   return (
