@@ -64,12 +64,17 @@ OLLAMA_URL=http://ollama:11434
 MODEL_NAME = "gemma3:1b"
 ```
 
-### 3. Instalacion de las dependencias del servicio Con Python
+### 3. Instalar Python
+
+Descargar Python 3.10
+En Windows lo puedes conseguir en la Microsoft Store
+
+### 4. Instalacion de las dependencias del servicio Con Python
 
 Ir a la carpeta python_image_generator
 y ejecutar install.py con python
 
-### 4. Instalar Ollama
+### 5. Instalar Ollama
 
 Descargar Ollama segun el sistema operativo
 https://ollama.com/download/
@@ -81,12 +86,12 @@ Al terminar la instalacion abrir ollama y ejecutar en la terminal
 ollama pull gemma3:1b
 ```
 
-### 5. Instalar Node.js
+### 6. Instalar Node.js
 
 Descargar Node.js segun el sistema operativo
 https://nodejs.org/en/download
 
-### 6. Ejecutar el backend
+### 7. Ejecutar el backend
 
 Desde la ubicacion root ejecutar:
 
@@ -102,7 +107,7 @@ npm start
 
 No cerrar esta terminal
 
-### 7. Ejecutar el frontend
+### 8. Ejecutar el frontend
 
 Desde la ubicacion root ejecutar:
 
@@ -124,7 +129,7 @@ npm run dev
 Automaticamente se abrira el navegador con los servicios disponibles
 No cerrar esta terminal
 
-### 5. Verificar Instalación
+### 9. Verificar Instalación
 
 - **Frontend**: http://localhost:5174
 - **API Backend**: http://localhost:3333
