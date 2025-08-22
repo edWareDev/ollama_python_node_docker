@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { 
+import {
     controllerGenerateProductImages,
     controllerGetAvailableStyles,
     controllerCheckImageGenerationService,
@@ -116,44 +116,20 @@ imageRouter.get("/endpoints", (req, res) => {
                     }
                 },
                 {
-                    method: "GET", 
+                    method: "GET",
                     path: "/api/images/styles",
                     description: "Lista de estilos disponibles para generación",
                     query_params: []
                 },
                 {
                     method: "GET",
-                    path: "/api/images/service/status", 
+                    path: "/api/images/service/status",
                     description: "Estado del servicio de generación (Python, dependencias)",
                     query_params: []
-                },
-                {
-                    method: "GET",
-                    path: "/api/images/list",
-                    description: "Lista paginada de imágenes generadas",
-                    query_params: ["page", "limit", "sessionId"]
-                },
-                {
-                    method: "GET", 
-                    path: "/api/images/serve/:filename",
-                    description: "Sirve imagen para mostrar en navegador",
-                    params: ["filename"]
-                },
-                {
-                    method: "GET",
-                    path: "/api/images/download/:filename", 
-                    description: "Descarga directa de imagen",
-                    params: ["filename"]
-                },
-                {
-                    method: "GET",
-                    path: "/api/images/metadata/:imageId",
-                    description: "Metadata detallada de una imagen",
-                    params: ["imageId"]
                 }
             ],
             available_styles: [
-                "profesional", "artistico", "minimalista", 
+                "profesional", "artistico", "minimalista",
                 "natural", "premium", "divertido"
             ],
             image_formats: ["PNG"],
